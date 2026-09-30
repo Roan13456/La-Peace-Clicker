@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Peace</title>
+<style>
+:root{--bg:#0d1b4c;--panel:#152766;--ink:#eef1ff;--dim:#9fb0e8;--gold:#f0c24b;--line:#2b418f;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Georgia,"Times New Roman",serif;-webkit-tap-highlight-color:transparent}
+main{max-width:520px;margin:0 auto;padding:16px}
+h1{font-size:28px;margin:0;letter-spacing:.02em}
+.sub{color:var(--dim);margin:0 0 12px;font-style:italic}
+.count{font-size:40px;color:var(--gold);line-height:1.1}
+.rate{color:var(--dim);margin-bottom:8px}
+#stone{display:block;margin:12px auto;width:200px;height:200px;border:0;background:none;cursor:pointer;touch-action:manipulation;transition:transform .08s}
+#stone:active{transform:scale(.93)}
+#stone:focus-visible,button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.bar{height:12px;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--gold);width:0}
+.books{display:flex;justify-content:space-between;color:var(--dim);margin:14px 0 4px}
+h2{font-size:18px;margin:22px 0 8px}
+.up{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;padding:10px 12px;margin-bottom:8px;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.up:disabled{opacity:.5;cursor:not-allowed}
+.up small{display:block;color:var(--dim)}
+.up b{color:var(--gold);white-space:nowrap}
+.cmd{padding:8px 12px;margin-bottom:6px;border-left:3px solid var(--gold);background:var(--panel);border-radius:0 8px 8px 0}
+.cmd.lock{border-left-color:var(--line);color:var(--dim);font-style:italic}
+.float{position:fixed;pointer-events:none;color:var(--gold);font-weight:bold;animation:up .8s forwards}
+@keyframes up{to{transform:translateY(-60px);opacity:0}}
+@media(prefers-reduced-motion:reduce){.float{animation:none;opacity:0}#stone{transition:none}}
+button.reset{background:none;border:0;color:var(--dim);text-decoration:underline;font:inherit;margin-top:24px;cursor:pointer}
+</style>
+</head>
+<body>
+<main>
+<h1>La Peace</h1>
+<p class="sub">Mine la peace. Spread the word.</p>
+<div class="count" id="n">0</div>
+<div class="rate" id="r"></div>
+<button id="stone" aria-label="Mine la peace">
+<svg viewBox="0 0 200 200" width="200" height="200" aria-hidden="true">
+<polygon points="100,12 178,60 168,150 100,190 30,150 22,60" fill="#1f3fbf" stroke="#0a1440" stroke-width="4"/>
+<polygon points="100,12 178,60 100,90 22,60" fill="#3556e0"/>
+<polygon points="100,90 178,60 168,150 100,190" fill="#16309a"/>
+<g fill="#f0c24b"><circle cx="70" cy="70" r="3"/><circle cx="125" cy="55" r="2.5"/><circle cx="90" cy="130" r="3.5"/><circle cx="140" cy="120" r="2.5"/><circle cx="60" cy="110" r="2"/><circle cx="115" cy="160" r="2.5"/></g>
+</svg>
+</button>
+<div class="books"><span id="bk">Book 0 of 100</span><span id="nx"></span></div>
+<div class="bar"><i id="pb"></i></div>
+<h2>Upgrades</h2>
+<div id="ups"></div>
+<h2>Commandments</h2>
+<div id="cmds"></div>
+<div class="rate" id="cs">Progress saves in this browser. To move it to another device, tap Show save code, copy it, then paste it there and tap Load save code.</div>
+<textarea id="sc" rows="3" style="width:100%;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;font:13px monospace" aria-label="Save code"></textarea>
+<div style="display:flex;gap:8px;margin-top:8px"><button class="up" id="sh" style="justify-content:center">Show save code</button><button class="up" id="ld" style="justify-content:center">Load save code</button></div>
+<button class="reset" id="rs">Reset game</button>
+</main>
+<script>
+var UP=[
+{n:"Better Pickaxe",d:"+1 per tap",b:15,c:1,p:0},
+{n:"Disciple",d:"+1 per second",b:30,c:0,p:1},
+{n:"The Endless Stream",d:"+8 per second",b:250,c:0,p:8},
+{n:"Sub Train",d:"+40 per second",b:1600,c:0,p:40},
+{n:"Lapis Cathedral",d:"+200 per second",b:9000,c:0,p:200}];
+var CM=["Thou shalt mine la peace daily.","Thou shalt not hoard la peace, but stream it.","Honor the prophet of the endless stream.","Thou shalt not call lapis 'just blue rocks'.","Remember the drop, and keep it holy.","Thou shalt tap the stone with a pure heart.","Thou shalt not spoil the plot of Book 100.","Love thy fellow miner as thyself.","Let no gold fleck go unnoticed.","Be at la peace. Always."];
+var s={l:0,t:0,o:[0,0,0,0,0]};
+try{var x=JSON.parse(localStorage.getItem("lapeace"));if(x&&x.o&&x.o.length==5)s=x}catch(e){}
+var $=function(i){return document.getElementById(i)};
+function cost(i){return Math.ceil(UP[i].b*Math.pow(1.15,s.o[i]))}
+function click(){var v=1;UP.forEach(function(u,i){v+=u.c*s.o[i]});return v}
+function ps(){var v=0;UP.forEach(function(u,i){v+=u.p*s.o[i]});return v}
+function fmt(v){return v>=1e6?(v/1e6).toFixed(2)+"M":v>=1e4?(v/1e3).toFixed(1)+"K":Math.floor(v).toString()}
+function books(){return Math.min(100,Math.floor(Math.sqrt(s.t/10)))}
+var ref=null,last="";
+function save(){try{localStorage.setItem("lapeace",JSON.stringify(s))}catch(e){}cloud()}
+function cloud(){if(!ref)return;var d=JSON.stringify(s);if(d==last)return;last=d;
+ref.set({l:s.l,t:s.t,o:s.o}).then(function(){$("cs").textContent="Saved to your account"}).catch(function(){$("cs").textContent="Cloud save failed. Progress is saved on this device."})}
+function initCloud(){if(!window.claude)return;
+Promise.all([claude.use("db"),claude.use("user")]).then(function(r){var db=r[0],u=r[1];if(!db||!u)return;
+return u.id().then(function(id){if(!id)return;ref=db.collection("data/users/"+id).doc("save");
+return ref.get().then(function(sn){var c=sn.exists&&sn.data();
+if(c&&c.o&&c.o.length==5&&c.t>s.t){s={l:c.l,t:c.t,o:c.o};render();$("cs").textContent="Loaded your saved progress"}
+else{$("cs").textContent="Cloud save on"}cloud()})})}).catch(function(){})}
+function build(){$("ups").innerHTML="";UP.forEach(function(u,i){var b=document.createElement("button");b.className="up";b.id="u"+i;
+b.onclick=function(){var c=cost(i);if(s.l>=c){s.l-=c;s.o[i]++;render();save()}};$("ups").appendChild(b)})}
+function render(){
+$("n").textContent=fmt(s.l)+" la peace";
+$("r").textContent=click()+" per tap, "+fmt(ps())+" per second";
+UP.forEach(function(u,i){var b=$("u"+i),c=cost(i);b.disabled=s.l<c;
+b.innerHTML="<span>"+u.n+" ("+s.o[i]+")<small>"+u.d+"</small></span><b>"+fmt(c)+"</b>"});
+var k=books();$("bk").textContent="Book "+k+" of 100";
+var need=Math.pow(k+1,2)*10,prev=Math.pow(k,2)*10;
+$("nx").textContent=k<100?fmt(need-s.t)+" to next book":"Scripture complete";
+$("pb").style.width=(k>=100?100:(s.t-prev)/(need-prev)*100)+"%";
+var h="";CM.forEach(function(c,i){var u=k>=(i+1)*10;
+h+='<div class="cmd'+(u?'':' lock')+'">'+(u?(i+1)+". "+c:(i+1)+". Unlocks at Book "+(i+1)*10)+"</div>"});
+$("cmds").innerHTML=h}
+$("stone").onclick=function(e){var v=click();s.l+=v;s.t+=v;
+var f=document.createElement("div");f.className="float";f.textContent="+"+v;
+f.style.left=(e.clientX||window.innerWidth/2)-10+"px";f.style.top=(e.clientY||300)-20+"px";
+document.body.appendChild(f);setTimeout(function(){f.remove()},800);render()};
+setInterval(function(){var g=ps()/10;if(g>0){s.l+=g;s.t+=g;render()}},100);
+setInterval(save,5000);
+$("rs").onclick=function(){if(confirm("Reset all progress?")){s={l:0,t:0,o:[0,0,0,0,0]};save();render()}};
+$("sh").onclick=function(){$("sc").value=btoa(JSON.stringify(s));$("sc").select()};
+$("ld").onclick=function(){try{var c=JSON.parse(atob($("sc").value.trim()));if(c&&c.o&&c.o.length==5&&isFinite(c.l)&&isFinite(c.t)){s={l:c.l,t:c.t,o:c.o};save();render();$("cs").textContent="Save code loaded"}else throw 0}catch(e){$("cs").textContent="That save code is not valid"}};
+build();render();
+</script>
+</body>
+</html>
